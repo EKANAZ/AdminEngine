@@ -1,0 +1,39 @@
+import { Router } from 'express';
+import { ClientController } from '../controllers/client.controller';
+import { validateRequest } from '../middleware/validation.middleware';
+import { clientLoginSchema, syncDataSchema } from '../validations/client.validation';
+import { authenticate } from '../middlewares/auth.middleware';
+
+const router = Router();
+const clientController = new ClientController();
+
+// Async handler wrapper
+const asyncHandler = (fn: Function) => (req: any, res: any, next: any) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Client authentication routes
+router.post('/login', 
+  validateRequest(clientLoginSchema), 
+  asyncHandler(clientController.login.bind(clientController))
+);
+
+// Client data sync routes
+router.post('/sync/pull',
+  authenticate,
+  validateRequest(syncDataSchema),
+  asyncHandler(clientController.pullData.bind(clientController))
+);
+
+router.post('/sync/push',
+  authenticate,
+  validateRequest(syncDataSchema),
+  asyncHandler(clientController.pushData.bind(clientController))
+);
+
+router.get('/sync/status',
+  authenticate,
+  asyncHandler(clientController.getSyncStatus.bind(clientController))
+);
+
+export default router; 
