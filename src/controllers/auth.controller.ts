@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
-import { AppDataSource } from '../config/database';
+import { DatabaseConfig } from '../core/config/DatabaseConfig';
 import logger from '../config/logger';
 import { User } from '../models/User';
 import { Company } from '../models/Company';
@@ -16,11 +16,11 @@ export class AuthController {
   }
 
   public async register(req: Request, res: Response): Promise<void> {
-    const { companyName, email, password, firstName, lastName } = req.body;
+    const { companyName, companyDomain, email, password, firstName, lastName } = req.body;
 
     try {
       // Start transaction
-      const queryRunner = AppDataSource.createQueryRunner();
+      const queryRunner = DatabaseConfig.getDataSource().createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
@@ -28,6 +28,7 @@ export class AuthController {
         // Create company
         const company = new Company();
         company.name = companyName;
+        company.domain = companyDomain;
         await queryRunner.manager.save(company);
 
         // Create tenant database
@@ -41,7 +42,7 @@ export class AuthController {
         user.firstName = firstName;
         user.lastName = lastName;
         user.company = company;
-        const adminRole = await this.authService.createRole('admin', []);
+        const adminRole = await this.authService.createRole({ name: 'admin', permissions: [] });
         if (adminRole) {
           user.roles = [adminRole];
         }
@@ -92,23 +93,24 @@ export class AuthController {
     const { email, password } = req.body;
 
     try {
-      const user = await AppDataSource
-        .getRepository(User)
+      const user = await DatabaseConfig.getDataSource().getRepository(User)
         .findOne({ where: { email }, relations: ['company'] });
 
       if (!user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           error: 'Invalid credentials'
         });
+        return;
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           error: 'Invalid credentials'
         });
+        return;
       }
 
       const token = jwt.sign(
@@ -146,10 +148,10 @@ export class AuthController {
   public async createRole(req: Request, res: Response): Promise<void> {
     try {
       const { name, permissions } = req.body;
-      const role = await this.authService.createRole(name, permissions);
+      const role = await this.authService.createRole({ name, permissions });
       res.status(201).json(role);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: (error as Error).message });
     }
   }
 
@@ -159,7 +161,7 @@ export class AuthController {
       await this.authService.assignRole(userId, roleId);
       res.json({ message: 'Role assigned successfully' });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: (error as Error).message });
     }
   }
 } 

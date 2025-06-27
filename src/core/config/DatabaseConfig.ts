@@ -1,6 +1,14 @@
 import { DataSource } from 'typeorm';
 import { Config } from './Config';
 import { Logger } from '../logger/Logger';
+import { User } from '../../models/User';
+import { Role } from '../../models/Role';
+import { Permission } from '../../models/Permission';
+import { Company } from '../../models/Company';
+import { Subscription } from '../../models/Subscription';
+import { Module } from '../../models/Module';
+import { CompanyModule } from '../../models/CompanyModule';
+import { Customer } from '../../models/Customer';
 
 export class DatabaseConfig {
   private static dataSource: DataSource;
@@ -14,7 +22,16 @@ export class DatabaseConfig {
         username: config.database.username,
         password: config.database.password,
         database: config.database.database,
-        entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+        entities: [
+          User,
+          Role,
+          Permission,
+          Company,
+          Subscription,
+          Module,
+          CompanyModule,
+          Customer
+        ],
         synchronize: config.isDevelopment(),
         logging: config.isDevelopment(),
       });

@@ -3,6 +3,6 @@ import { IBaseMiddleware } from '../interfaces/IBaseMiddleware';
 
 export class MiddlewareFactory {
   static create(): IBaseMiddleware {
-    return new BaseMiddleware();
+    throw new Error('Cannot instantiate abstract BaseMiddleware. Please provide a concrete middleware implementation.');
   }
-} 
+}

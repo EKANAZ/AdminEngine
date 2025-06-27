@@ -10,7 +10,8 @@ exports.registerSchema = joi_1.default.object({
     email: joi_1.default.string().required().email(),
     password: joi_1.default.string().required().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
     firstName: joi_1.default.string().required().min(2).max(50),
-    lastName: joi_1.default.string().required().min(2).max(50)
+    lastName: joi_1.default.string().required().min(2).max(50),
+    companyDomain: joi_1.default.string().required().min(2).max(100)
 }).required();
 exports.loginSchema = joi_1.default.object({
     email: joi_1.default.string().required().email(),

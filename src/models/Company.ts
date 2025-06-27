@@ -1,23 +1,24 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { User } from './User';
 import { CompanyModule } from './CompanyModule';
+import { Subscription } from './Subscription';
 
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ unique: true })
-  domain: string;
+  domain!: string;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column('jsonb', { nullable: true })
-  metadata: {
+  metadata!: {
     databaseName?: string;
     databaseUser?: string;
     databasePassword?: string;
@@ -29,14 +30,17 @@ export class Company {
   };
 
   @OneToMany(() => User, user => user.company)
-  users: User[];
+  users!: User[];
 
   @OneToMany(() => CompanyModule, companyModule => companyModule.company)
-  modules: CompanyModule[];
+  modules!: CompanyModule[];
+
+  @OneToMany(() => Subscription, sub => sub.company)
+  subscriptions!: Subscription[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

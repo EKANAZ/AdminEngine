@@ -6,6 +6,10 @@ import { User } from '../models/User';
 import { Role } from '../models/Role';
 import { Permission } from '../models/Permission';
 import * as bcrypt from 'bcrypt';
+import { Subscription } from '../models/Subscription';
+import { Module } from '../models/Module';
+import { CompanyModule } from '../models/CompanyModule';
+import { Customer } from '../models/Customer';
 
 // Load environment variables
 config();
@@ -19,7 +23,16 @@ const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: process.env.NODE_ENV === 'development',
-    entities: ['src/entities/**/*.ts'],
+    entities: [
+      User,
+      Role,
+      Permission,
+      Company,
+      Subscription,
+      Module,
+      CompanyModule,
+      Customer
+    ],
     migrations: ['src/migrations/**/*.ts'],
     subscribers: ['src/subscribers/**/*.ts'],
 });

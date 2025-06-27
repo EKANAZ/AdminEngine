@@ -4,30 +4,30 @@ import { Role } from './Role';
 @Entity('permissions')
 export class Permission {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  resource: string;
+  resource!: string;
 
   @Column()
-  action: string;
+  action!: string;
 
   @Column({ default: false })
-  isAllowed: boolean;
+  isAllowed!: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
-  conditions: Record<string, any>;
+  conditions!: Record<string, any>;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>;
+  metadata!: Record<string, any>;
 
   @ManyToOne(() => Role, role => role.permissions)
   @JoinColumn({ name: 'role_id' })
-  role: Role;
+  role!: Role;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

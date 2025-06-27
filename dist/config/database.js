@@ -37,8 +37,10 @@ const createTenantDatabase = async (tenantId) => {
     });
     try {
         await tempDataSource.initialize();
-        await tempDataSource.query(`CREATE DATABASE tenant_${tenantId}`);
-        logger_1.default.info(`Created database for tenant: ${tenantId}`);
+        // Remove hyphens from tenantId for DB name
+        const dbName = `tenant_${tenantId.replace(/-/g, '')}`;
+        await tempDataSource.query(`CREATE DATABASE ${dbName}`);
+        logger_1.default.info(`Created database for tenant: ${dbName}`);
     }
     catch (error) {
         logger_1.default.error(`Error creating tenant database: ${error}`);
@@ -57,7 +59,7 @@ const getTenantDataSource = (tenantId) => {
         port: parseInt(process.env.DB_PORT || '5432'),
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
-        database: `tenant_${tenantId}`,
+        database: `tenant_${tenantId.replace(/-/g, '')}`,
         synchronize: false, // Disable synchronize for security
         logging: process.env.NODE_ENV === 'development',
         entities: ['src/modules/**/*.ts'],

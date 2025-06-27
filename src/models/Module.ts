@@ -4,22 +4,22 @@ import { CompanyModule } from './CompanyModule';
 @Entity('modules')
 export class Module {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  name: string;
+  name!: string;
 
   @Column()
-  version: string;
+  version!: string;
 
   @Column()
-  description: string;
+  description!: string;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column('jsonb')
-  config: {
+  config!: {
     dependencies: string[];
     features: string[];
     settings: Record<string, any>;
@@ -31,11 +31,11 @@ export class Module {
   };
 
   @OneToMany(() => CompanyModule, companyModule => companyModule.module)
-  companyModules: CompanyModule[];
+  companyModules!: CompanyModule[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

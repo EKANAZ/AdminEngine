@@ -1,16 +1,17 @@
-import { DataSource } from 'typeorm';
+import { DataSource, MoreThan } from 'typeorm';
 import { ClientUser } from '../models/ClientUser';
 import { Company } from '../models/Company';
 import { sign } from 'jsonwebtoken';
 import { compare } from 'bcrypt';
 import logger from '../config/logger';
+import { DatabaseConfig } from '../core/config/DatabaseConfig';
 
 export class ClientService {
     // Client login
     async login(email: string, password: string, companyDomain: string) {
         try {
             // Find company by domain
-            const company = await Company.findOne({ where: { domain: companyDomain } });
+            const company = await DatabaseConfig.getDataSource().getRepository(Company).findOne({ where: { domain: companyDomain } });
             if (!company) {
                 throw new Error('Company not found');
             }
@@ -71,7 +72,7 @@ export class ClientService {
     // Pull data from server to client
     async pullData(
         dataSource: DataSource,
-        userId: number,
+        userId: string,
         lastSyncTimestamp: string,
         entityTypes: string[]
     ) {
@@ -98,7 +99,7 @@ export class ClientService {
     // Push data from client to server
     async pushData(
         dataSource: DataSource,
-        userId: number,
+        userId: string,
         changes: { [key: string]: any[] }
     ) {
         try {
@@ -128,7 +129,7 @@ export class ClientService {
     }
 
     // Get sync status
-    async getSyncStatus(dataSource: DataSource, userId: number) {
+    async getSyncStatus(dataSource: DataSource, userId: string) {
         try {
             const syncStatus = await dataSource
                 .getRepository('SyncStatus')
@@ -143,4 +144,6 @@ export class ClientService {
             throw error;
         }
     }
+
+    get companyRepository() { return DatabaseConfig.getDataSource().getRepository(Company); }
 } 

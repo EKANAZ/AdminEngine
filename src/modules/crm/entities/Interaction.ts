@@ -1,41 +1,41 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Customer } from './Customer';
+import { users_client } from './Customer_user';
 
 @Entity('interactions')
 export class Interaction {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  type: 'email' | 'call' | 'meeting' | 'note' | 'other';
+  type!: 'email' | 'call' | 'meeting' | 'note' | 'other';
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text')
-  description: string;
+  description!: string;
 
   @Column({ type: 'timestamp' })
-  date: Date;
+  date!: Date;
 
   @Column({ default: 'pending' })
-  status: 'pending' | 'completed' | 'cancelled';
+  status!: 'pending' | 'completed' | 'cancelled';
 
   @Column('jsonb', { nullable: true })
-  metadata: {
+  metadata!: {
     duration?: number;
     participants?: string[];
     followUpDate?: Date;
     customFields?: Record<string, any>;
   };
 
-  @ManyToOne(() => Customer, customer => customer.interactions)
+  @ManyToOne(() => users_client, customer => customer.interactions)
   @JoinColumn({ name: 'customer_id' })
-  customer: Customer;
+  customer!: users_client;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

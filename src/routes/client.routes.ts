@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { ClientController } from '../controllers/client.controller';
-import { validateRequest } from '../middleware/validation.middleware';
-import { clientLoginSchema, syncDataSchema } from '../validations/client.validation';
-import { authenticate } from '../middlewares/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 const clientController = new ClientController();
@@ -14,20 +12,17 @@ const asyncHandler = (fn: Function) => (req: any, res: any, next: any) => {
 
 // Client authentication routes
 router.post('/login', 
-  validateRequest(clientLoginSchema), 
   asyncHandler(clientController.login.bind(clientController))
 );
 
 // Client data sync routes
 router.post('/sync/pull',
   authenticate,
-  validateRequest(syncDataSchema),
   asyncHandler(clientController.pullData.bind(clientController))
 );
 
 router.post('/sync/push',
   authenticate,
-  validateRequest(syncDataSchema),
   asyncHandler(clientController.pushData.bind(clientController))
 );
 
@@ -36,4 +31,4 @@ router.get('/sync/status',
   asyncHandler(clientController.getSyncStatus.bind(clientController))
 );
 
-export default router; 
+export default router;

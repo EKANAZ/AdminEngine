@@ -5,32 +5,32 @@ import { Module } from './Module';
 @Entity('company_modules')
 export class CompanyModule {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => Company, company => company.modules)
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company!: Company;
 
   @ManyToOne(() => Module, module => module.companyModules)
   @JoinColumn({ name: 'module_id' })
-  module: Module;
+  module!: Module;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column('jsonb', { nullable: true })
-  settings: {
+  settings!: {
     features: Record<string, boolean>;
     customizations: Record<string, any>;
     limits: Record<string, number>;
   };
 
   @Column({ type: 'timestamp', nullable: true })
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

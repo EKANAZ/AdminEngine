@@ -38,11 +38,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const auth_service_1 = require("../services/auth.service");
-const database_1 = require("../config/database");
+const DatabaseConfig_1 = require("../core/config/DatabaseConfig");
 const logger_1 = __importDefault(require("../config/logger"));
 const User_1 = require("../models/User");
 const Company_1 = require("../models/Company");
-const database_2 = require("../config/database");
+const database_1 = require("../config/database");
 const bcrypt = __importStar(require("bcrypt"));
 const jwt = __importStar(require("jsonwebtoken"));
 class AuthController {
@@ -50,19 +50,20 @@ class AuthController {
         this.authService = new auth_service_1.AuthService();
     }
     async register(req, res) {
-        const { companyName, email, password, firstName, lastName } = req.body;
+        const { companyName, companyDomain, email, password, firstName, lastName } = req.body;
         try {
             // Start transaction
-            const queryRunner = database_1.AppDataSource.createQueryRunner();
+            const queryRunner = DatabaseConfig_1.DatabaseConfig.getDataSource().createQueryRunner();
             await queryRunner.connect();
             await queryRunner.startTransaction();
             try {
                 // Create company
                 const company = new Company_1.Company();
                 company.name = companyName;
+                company.domain = companyDomain;
                 await queryRunner.manager.save(company);
                 // Create tenant database
-                await (0, database_2.createTenantDatabase)(company.id);
+                await (0, database_1.createTenantDatabase)(company.id);
                 // Create admin user
                 const hashedPassword = await bcrypt.hash(password, 10);
                 const user = new User_1.User();
@@ -71,7 +72,7 @@ class AuthController {
                 user.firstName = firstName;
                 user.lastName = lastName;
                 user.company = company;
-                const adminRole = await this.authService.createRole('admin', []);
+                const adminRole = await this.authService.createRole({ name: 'admin', permissions: [] });
                 if (adminRole) {
                     user.roles = [adminRole];
                 }
@@ -116,21 +117,22 @@ class AuthController {
     async login(req, res) {
         const { email, password } = req.body;
         try {
-            const user = await database_1.AppDataSource
-                .getRepository(User_1.User)
+            const user = await DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(User_1.User)
                 .findOne({ where: { email }, relations: ['company'] });
             if (!user) {
-                return res.status(401).json({
+                res.status(401).json({
                     success: false,
                     error: 'Invalid credentials'
                 });
+                return;
             }
             const isValidPassword = await bcrypt.compare(password, user.password);
             if (!isValidPassword) {
-                return res.status(401).json({
+                res.status(401).json({
                     success: false,
                     error: 'Invalid credentials'
                 });
+                return;
             }
             const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
             res.json({
@@ -162,7 +164,7 @@ class AuthController {
     async createRole(req, res) {
         try {
             const { name, permissions } = req.body;
-            const role = await this.authService.createRole(name, permissions);
+            const role = await this.authService.createRole({ name, permissions });
             res.status(201).json(role);
         }
         catch (error) {

@@ -3,7 +3,7 @@ import { IBaseValidation } from '../interfaces/IBaseValidation';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 
-export abstract class BaseValidation<T> implements IBaseValidation {
+export abstract class BaseValidation<T extends object> implements IBaseValidation {
   constructor(protected readonly dtoClass: new () => T) {}
 
   async validate(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -22,4 +22,4 @@ export abstract class BaseValidation<T> implements IBaseValidation {
     req.body = dtoObject;
     next();
   }
-} 
+}

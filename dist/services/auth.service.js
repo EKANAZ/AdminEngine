@@ -38,7 +38,7 @@ const User_1 = require("../models/User");
 const Company_1 = require("../models/Company");
 const Role_1 = require("../models/Role");
 const Permission_1 = require("../models/Permission");
-const database_1 = require("../config/database");
+const DatabaseConfig_1 = require("../core/config/DatabaseConfig");
 const bcrypt = __importStar(require("bcrypt"));
 const jwt = __importStar(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
@@ -51,28 +51,24 @@ class AuthError extends Error {
 }
 exports.AuthError = AuthError;
 class AuthService {
-    constructor() {
-        this.userRepository = database_1.AppDataSource.getRepository(User_1.User);
-        this.companyRepository = database_1.AppDataSource.getRepository(Company_1.Company);
-        this.roleRepository = database_1.AppDataSource.getRepository(Role_1.Role);
-        this.permissionRepository = database_1.AppDataSource.getRepository(Permission_1.Permission);
-    }
+    get userRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(User_1.User); }
+    get companyRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Company_1.Company); }
+    get roleRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Role_1.Role); }
+    get permissionRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Permission_1.Permission); }
     async register(userData) {
-        // Create company
-        const company = this.companyRepository.create({
-            name: userData.companyName,
-            status: 'active'
-        });
+        // 1. Create a new company for the user
+        const company = this.companyRepository.create({ name: userData.companyName });
         await this.companyRepository.save(company);
-        // Create user
+        // 2. Hash the user's password for security
         const hashedPassword = await bcrypt.hash(userData.password, 10);
+        // 3. Create the user and associate with the company
         const user = this.userRepository.create({
             ...userData,
             password: hashedPassword,
             company
         });
         await this.userRepository.save(user);
-        // Create default admin role
+        // 4. Create a default admin role for the user
         const adminRole = this.roleRepository.create({
             name: 'Admin',
             description: 'System administrator role',
@@ -80,7 +76,7 @@ class AuthService {
             user
         });
         await this.roleRepository.save(adminRole);
-        // Create default permissions
+        // 5. Assign all permissions to the admin role
         const defaultPermissions = [
             { resource: '*', action: '*', isAllowed: true }
         ];
@@ -91,11 +87,13 @@ class AuthService {
             });
             await this.permissionRepository.save(permission);
         }
-        // Generate JWT token
+        // 6. Generate a JWT token for the new user
         const token = this.generateToken(user);
+        // 7. Return the user and token
         return { user, token };
     }
     async login(email, password) {
+        // 1. Find the user by email
         const user = await this.userRepository.findOne({
             where: { email },
             relations: ['company', 'roles', 'roles.permissions']
@@ -103,6 +101,7 @@ class AuthService {
         if (!user) {
             throw new Error('User not found');
         }
+        // 2. Compare the provided password with the stored hash
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             throw new Error('Invalid password');
@@ -110,9 +109,10 @@ class AuthService {
         if (!user.isActive) {
             throw new Error('User account is inactive');
         }
-        // Update last login
+        // 3. Update the user's last login timestamp
         user.lastLoginAt = new Date();
         await this.userRepository.save(user);
+        // 4. Generate a JWT token for the user
         const token = this.generateToken(user);
         return { user, token };
     }
@@ -192,7 +192,7 @@ class AuthService {
         if (existingRole) {
             throw new AuthError('Role already exists', 400);
         }
-        const role = this.roleRepository.create(roleData);
+        const role = this.roleRepository.create({ name: roleData.name, description: roleData.description });
         return this.roleRepository.save(role);
     }
 }

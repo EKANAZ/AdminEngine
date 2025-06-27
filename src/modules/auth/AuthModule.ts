@@ -10,7 +10,7 @@ export class AuthModule implements IModule {
   }
 
   initialize(): void {
-    // Mount authentication routes under /api/auth
-    this.router.use('/api/auth', authRoutes);
+    // Mount authentication routes at root (prefix handled by ApplicationFactory)
+    this.router.use(authRoutes);
   }
 } 

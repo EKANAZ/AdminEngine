@@ -30,8 +30,12 @@ class ClientController {
     async pullData(req, res) {
         try {
             const { lastSyncTimestamp, entityTypes } = req.body;
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = req.user?.id;
+            const companyId = req.user?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
             const tenantDataSource = (0, database_1.getTenantDataSource)(companyId.toString());
             const result = await this.clientService.pullData(tenantDataSource, userId, lastSyncTimestamp, entityTypes);
             res.json({
@@ -52,8 +56,12 @@ class ClientController {
     async pushData(req, res) {
         try {
             const { changes } = req.body;
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = req.user?.id;
+            const companyId = req.user?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
             const tenantDataSource = (0, database_1.getTenantDataSource)(companyId.toString());
             const result = await this.clientService.pushData(tenantDataSource, userId, changes);
             res.json({
@@ -73,8 +81,12 @@ class ClientController {
     // Get sync status
     async getSyncStatus(req, res) {
         try {
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = req.user?.id;
+            const companyId = req.user?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
             const tenantDataSource = (0, database_1.getTenantDataSource)(companyId.toString());
             const status = await this.clientService.getSyncStatus(tenantDataSource, userId);
             res.json({

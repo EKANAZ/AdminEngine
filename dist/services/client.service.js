@@ -10,12 +10,13 @@ const Company_1 = require("../models/Company");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const bcrypt_1 = require("bcrypt");
 const logger_1 = __importDefault(require("../config/logger"));
+const DatabaseConfig_1 = require("../core/config/DatabaseConfig");
 class ClientService {
     // Client login
     async login(email, password, companyDomain) {
         try {
             // Find company by domain
-            const company = await Company_1.Company.findOne({ where: { domain: companyDomain } });
+            const company = await DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Company_1.Company).findOne({ where: { domain: companyDomain } });
             if (!company) {
                 throw new Error('Company not found');
             }
@@ -70,7 +71,7 @@ class ClientService {
                 const repository = dataSource.getRepository(entityType);
                 const data = await repository.find({
                     where: {
-                        updatedAt: MoreThan(new Date(lastSyncTimestamp))
+                        updatedAt: (0, typeorm_1.MoreThan)(new Date(lastSyncTimestamp))
                     }
                 });
                 result[entityType] = data;
@@ -123,5 +124,6 @@ class ClientService {
             throw error;
         }
     }
+    get companyRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Company_1.Company); }
 }
 exports.ClientService = ClientService;

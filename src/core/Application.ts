@@ -37,22 +37,34 @@ export class App {
   private setupErrorHandling(): void {
     const errorHandler = new ErrorHandlerMiddleware();
     this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      errorHandler.handle(err, req, res, next);
+      // Pass error as last argument to match ErrorHandlerMiddleware signature
+      errorHandler.handle(req, res, next, err);
     });
   }
 
-  public use(middleware: any): void {
-    this.app.use(middleware);
+  public use(...args: any[]): void {
+    // Pass all arguments to express' app.use
+    // This allows both (middleware) and (path, middleware)
+    // @ts-ignore
+    this.app.use(...args);
   }
 
   public listen(): void {
     const port = this.config.port;
     this.app.listen(port, () => {
       this.logger.info(`Server is running on port ${port}`);
+      // Print all registered routes for debugging
+      // @ts-ignore
+      (this.app._router.stack as any[])
+        .filter((r: any) => r.route)
+        .forEach((r: any) => {
+          const methods = Object.keys(r.route.methods).join(',').toUpperCase();
+          console.log(`${methods} ${r.route.path}`);
+        });
     });
   }
 
   public getApp(): Application {
     return this.app;
   }
-} 
+}

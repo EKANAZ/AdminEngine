@@ -4,7 +4,7 @@ import { User } from '../models/User';
 import { Company } from '../models/Company';
 import { Role } from '../models/Role';
 import { Permission } from '../models/Permission';
-import { Module } from '../models/Module';
+import { Module } from '../models/Module'; 
 import * as bcrypt from 'bcrypt';
 
 async function initializeDatabase() {
@@ -24,10 +24,17 @@ async function initializeDatabase() {
         if (!adminCompany) {
             adminCompany = companyRepository.create({
                 name: 'Admin Company',
-                status: 'active',
+                domain: 'admin-company',
+                isActive: true,
                 metadata: {
-                    type: 'admin',
-                    features: ['all']
+                    databaseName: 'admin_db',
+                    databaseUser: 'admin_user',
+                    databasePassword: 'admin_pass',
+                    settings: {
+                        theme: 'default',
+                        language: 'en',
+                        timezone: 'UTC'
+                    }
                 }
             });
             await companyRepository.save(adminCompany);
@@ -45,7 +52,7 @@ async function initializeDatabase() {
                 password: hashedPassword,
                 firstName: 'Admin',
                 lastName: 'User',
-                role: 'admin',
+                roles: [],
                 company: adminCompany,
                 isActive: true
             });
@@ -82,9 +89,15 @@ async function initializeDatabase() {
         ];
 
         for (const perm of permissions) {
-            let permission = await permissionRepository.findOne({ where: { name: perm.name } });
+            let permission = await permissionRepository.findOne({ where: { resource: perm.name, action: 'manage' } });
             if (!permission) {
-                permission = permissionRepository.create(perm);
+                permission = permissionRepository.create({
+                    resource: perm.name,
+                    action: 'manage',
+                    isAllowed: true,
+                    metadata: {},
+                    conditions: {}
+                });
                 await permissionRepository.save(permission);
                 logger.info(`${perm.name} permission created`);
             }
@@ -117,4 +130,4 @@ async function initializeDatabase() {
 }
 
 // Run the initialization
-initializeDatabase(); 
+initializeDatabase();

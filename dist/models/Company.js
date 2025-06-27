@@ -13,6 +13,7 @@ exports.Company = void 0;
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const CompanyModule_1 = require("./CompanyModule");
+const Subscription_1 = require("./Subscription");
 let Company = class Company {
 };
 exports.Company = Company;
@@ -44,6 +45,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => CompanyModule_1.CompanyModule, companyModule => companyModule.company),
     __metadata("design:type", Array)
 ], Company.prototype, "modules", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Subscription_1.Subscription, sub => sub.company),
+    __metadata("design:type", Array)
+], Company.prototype, "subscriptions", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

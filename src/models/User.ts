@@ -5,45 +5,108 @@ import { Role } from './Role';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  firstName: string;
+  firstName!: string;
 
   @Column()
-  lastName: string;
+  lastName!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column({ nullable: true })
-  lastLoginAt: Date;
+  lastLoginAt!: Date;
 
   @Column({ nullable: true })
-  passwordResetToken: string;
+  passwordResetToken!: string;
 
   @Column({ nullable: true })
-  passwordResetExpires: Date;
+  passwordResetExpires!: Date;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>;
+  metadata!: Record<string, any>;
 
   @ManyToOne(() => Company, company => company.users)
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company!: Company;
 
   @OneToMany(() => Role, role => role.user)
-  roles: Role[];
+  roles!: Role[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
+
+  @Column({ nullable: true })
+  branchId?: string;
+
+  @Column('jsonb', { nullable: true })
+  phoneModel?: Record<string, any>;
+
+  @Column({ nullable: true })
+  image?: string;
+
+  @Column({ nullable: true })
+  gender?: string;
+
+  @Column({ type: 'date', nullable: true })
+  dob?: Date;
+
+  @Column({ default: true })
+  active!: boolean;
+
+  @Column({ nullable: true })
+  note?: string;
+
+  @Column({ nullable: true })
+  Unique_id?: string;
+
+  @Column({ nullable: true })
+  name?: string;
+
+  @Column({ nullable: true })
+  status?: string;
+
+  @Column({ nullable: true })
+  whatsapp?: string;
+
+  @Column({ nullable: true })
+  bloodGroup?: string;
+
+  @Column('jsonb', { nullable: true })
+  bankList?: any[];
+
+  @Column({ nullable: true })
+  gstNo?: string;
+
+  @Column({ nullable: true })
+  companyName?: string;
+
+  @Column('jsonb', { nullable: true })
+  stateCode?: Record<string, any>;
+
+  @Column({ nullable: true })
+  sync_status?: string;
+
+  @Column({ nullable: true })
+  version?: number;
+
+  @Column({ nullable: true })
+  last_updated?: string;
+
+  @Column({ nullable: true })
+  device_id?: string;
+
+  @Column({ nullable: true })
+  is_deleted?: number;
 } 

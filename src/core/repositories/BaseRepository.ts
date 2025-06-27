@@ -1,7 +1,7 @@
-import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, Repository, ObjectLiteral } from 'typeorm';
 import { IBaseRepository } from '../interfaces/IBaseRepository';
 
-export abstract class BaseRepository<T> implements IBaseRepository<T> {
+export abstract class BaseRepository<T extends ObjectLiteral> implements IBaseRepository<T> {
   constructor(protected readonly repository: Repository<T>) {}
 
   async findOne(where: FindOptionsWhere<T>): Promise<T | null> {
@@ -22,7 +22,7 @@ export abstract class BaseRepository<T> implements IBaseRepository<T> {
 
   async update(id: string, data: DeepPartial<T>): Promise<T> {
     await this.repository.update(id, data as any);
-    return this.findOne({ id } as FindOptionsWhere<T>) as Promise<T>;
+    return this.findOne({ id } as unknown as FindOptionsWhere<T>) as Promise<T>;
   }
 
   async delete(id: string): Promise<void> {
@@ -32,4 +32,4 @@ export abstract class BaseRepository<T> implements IBaseRepository<T> {
   async softDelete(id: string): Promise<void> {
     await this.repository.softDelete(id);
   }
-} 
+}

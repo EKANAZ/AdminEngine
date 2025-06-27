@@ -5,30 +5,30 @@ import { Permission } from './Permission';
 @Entity('roles')
 export class Role {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ nullable: true })
-  description: string;
+  description!: string;
 
   @Column({ default: false })
-  isSystem: boolean;
+  isSystem!: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>;
+  metadata!: Record<string, any>;
 
   @ManyToOne(() => User, user => user.roles)
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
   @OneToMany(() => Permission, permission => permission.role)
-  permissions: Permission[];
+  permissions!: Permission[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 } 

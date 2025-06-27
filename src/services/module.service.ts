@@ -1,16 +1,12 @@
 import { Repository } from 'typeorm';
 import { Module } from '../models/Module';
 import { CompanyModule } from '../models/CompanyModule';
-import { AppDataSource, getTenantDataSource } from '../config/database';
+import { getTenantDataSource } from '../config/database';
+import { DatabaseConfig } from '../core/config/DatabaseConfig';
 
 export class ModuleService {
-  private moduleRepository: Repository<Module>;
-  private companyModuleRepository: Repository<CompanyModule>;
-
-  constructor() {
-    this.moduleRepository = AppDataSource.getRepository(Module);
-    this.companyModuleRepository = AppDataSource.getRepository(CompanyModule);
-  }
+  get moduleRepository() { return DatabaseConfig.getDataSource().getRepository(Module); }
+  get companyModuleRepository() { return DatabaseConfig.getDataSource().getRepository(CompanyModule); }
 
   async installModule(companyId: string, moduleId: string): Promise<CompanyModule> {
     const module = await this.moduleRepository.findOne({ where: { id: moduleId } });
@@ -62,9 +58,6 @@ export class ModuleService {
       
       // Update tenant data source with module entities
       tenantDataSource.entityMetadatas.push(...moduleEntities);
-      
-      // Run module migrations
-      await tenantDataSource.runMigrations();
       
       // Seed module data
       await this.seedModuleData(tenantDataSource, module);

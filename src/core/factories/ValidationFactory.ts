@@ -3,6 +3,6 @@ import { IBaseValidation } from '../interfaces/IBaseValidation';
 
 export class ValidationFactory {
   static create<T>(dtoClass: new () => T): IBaseValidation {
-    return new BaseValidation<T>(dtoClass);
+    throw new Error('Cannot instantiate abstract BaseValidation. Please provide a concrete validation implementation.');
   }
-} 
+}

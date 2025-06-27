@@ -37,11 +37,10 @@ exports.ModuleService = void 0;
 const Module_1 = require("../models/Module");
 const CompanyModule_1 = require("../models/CompanyModule");
 const database_1 = require("../config/database");
+const DatabaseConfig_1 = require("../core/config/DatabaseConfig");
 class ModuleService {
-    constructor() {
-        this.moduleRepository = database_1.AppDataSource.getRepository(Module_1.Module);
-        this.companyModuleRepository = database_1.AppDataSource.getRepository(CompanyModule_1.CompanyModule);
-    }
+    get moduleRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(Module_1.Module); }
+    get companyModuleRepository() { return DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(CompanyModule_1.CompanyModule); }
     async installModule(companyId, moduleId) {
         const module = await this.moduleRepository.findOne({ where: { id: moduleId } });
         if (!module) {

@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkPermission = exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const database_1 = require("../config/database");
+const DatabaseConfig_1 = require("../core/config/DatabaseConfig");
 const User_1 = require("../models/User");
 const authenticate = async (req, res, next) => {
     try {
@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
             return;
         }
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
-        const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+        const userRepository = DatabaseConfig_1.DatabaseConfig.getDataSource().getRepository(User_1.User);
         const user = await userRepository.findOne({
             where: { id: decoded.userId },
             relations: ['roles']
@@ -48,8 +48,10 @@ const checkPermission = (resource, action) => {
                 res.status(401).json({ message: 'User not authenticated' });
                 return;
             }
-            const hasPermission = req.user.roles.some(role => {
-                const resourcePermissions = role.permissions?.[resource];
+            const hasPermission = Array.isArray(req.user.roles) && req.user.roles.some((roleObj) => {
+                if (!roleObj || typeof roleObj !== 'object' || !roleObj.permissions)
+                    return false;
+                const resourcePermissions = roleObj.permissions[resource];
                 return resourcePermissions && resourcePermissions[action];
             });
             if (!hasPermission) {

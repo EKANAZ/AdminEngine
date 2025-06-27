@@ -4,13 +4,15 @@ exports.ErrorHandlerMiddleware = void 0;
 const BaseError_1 = require("../errors/BaseError");
 const BaseMiddleware_1 = require("./BaseMiddleware");
 class ErrorHandlerMiddleware extends BaseMiddleware_1.BaseMiddleware {
-    async handle(error, req, res, next) {
+    async handle(req, res, next, error) {
         if (error instanceof BaseError_1.BaseError) {
             this.sendError(res, error.statusCode, error.message);
             return;
         }
         // Log unexpected errors
-        console.error('Unexpected error:', error);
+        if (error) {
+            console.error('Unexpected error:', error);
+        }
         this.sendError(res, 500, 'Internal server error');
     }
 }

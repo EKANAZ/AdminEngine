@@ -29,8 +29,12 @@ export class ClientController {
     async pullData(req: Request, res: Response) {
         try {
             const { lastSyncTimestamp, entityTypes } = req.body;
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = (req.user as any)?.id;
+            const companyId = (req.user as any)?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
 
             const tenantDataSource = getTenantDataSource(companyId.toString());
             const result = await this.clientService.pullData(
@@ -58,8 +62,12 @@ export class ClientController {
     async pushData(req: Request, res: Response) {
         try {
             const { changes } = req.body;
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = (req.user as any)?.id;
+            const companyId = (req.user as any)?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
 
             const tenantDataSource = getTenantDataSource(companyId.toString());
             const result = await this.clientService.pushData(
@@ -85,8 +93,12 @@ export class ClientController {
     // Get sync status
     async getSyncStatus(req: Request, res: Response) {
         try {
-            const userId = req.user.id;
-            const companyId = req.user.companyId;
+            const userId = (req.user as any)?.id;
+            const companyId = (req.user as any)?.companyId;
+            if (!userId || !companyId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
 
             const tenantDataSource = getTenantDataSource(companyId.toString());
             const status = await this.clientService.getSyncStatus(
@@ -106,4 +118,4 @@ export class ClientController {
             });
         }
     }
-} 
+}

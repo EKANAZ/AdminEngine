@@ -34,7 +34,8 @@ class App {
     setupErrorHandling() {
         const errorHandler = new ErrorHandlerMiddleware_1.ErrorHandlerMiddleware();
         this.app.use((err, req, res, next) => {
-            errorHandler.handle(err, req, res, next);
+            // Pass error as last argument to match ErrorHandlerMiddleware signature
+            errorHandler.handle(req, res, next, err);
         });
     }
     use(middleware) {
