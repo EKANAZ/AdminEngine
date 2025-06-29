@@ -1,19 +1,17 @@
 // src/core/sync/SyncRegistry.ts
 
-type EntityConstructor = { new (): any; name: string };
+import { ClientUser } from '../../models/ClientUser';
+import { Interaction } from '../../models/Interaction';
 
 export class SyncRegistry {
-  private static entityMap = new Map<string, EntityConstructor>();
+  private static entityMap: Record<string, any> = {
+    end_user: ClientUser,
+    interactions: Interaction,
+  };
 
-  static register(entityClass: EntityConstructor) {
-    this.entityMap.set(entityClass.name, entityClass);
-  }
-
-  static getEntityClass(entityType: string): EntityConstructor {
-    const entityClass = this.entityMap.get(entityType);
-    if (!entityClass) {
-      throw new Error(`Entity type ${entityType} not registered`);
-    }
+  static getEntityClass(entityType: string) {
+    const entityClass = this.entityMap[entityType];
+    if (!entityClass) throw new Error(`Entity type ${entityType} not registered`);
     return entityClass;
   }
 }

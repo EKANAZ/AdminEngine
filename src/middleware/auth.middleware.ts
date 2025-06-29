@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
+import jwt from 'jsonwebtoken';
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -76,5 +77,34 @@ export const requireCompany = async (
     return next();
   } catch (error) {
     return res.status(500).json({ message: 'Error checking company status' });
+  }
+};
+
+export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ success: false, error: 'No token provided' });
+
+  try {
+    const secret = process.env.JWT_SECRET!;
+    const decoded = jwt.verify(token, secret) as any;
+    
+    // Set the full decoded JWT payload as user object
+    (req as any).user = {
+      id: decoded.sub,
+      email: decoded.email,
+      companyId: decoded.companyId,
+      customerId: decoded.customerId, // For client users
+      roles: decoded.roles || [],
+      type: decoded.type || 'user'
+    };
+    
+    console.log('JWT decoded user:', (req as any).user);
+    console.log('JWT payload:', decoded);
+    next();
+  } catch (err) {
+    console.error('JWT verification error:', err);
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 }; 

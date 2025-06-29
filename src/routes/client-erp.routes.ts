@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { authenticateClient, authorizeClient, ClientRequest } from '../middleware/client.middleware';
 import { getTenantDataSource } from '../config/database';
-import { users_client } from '../modules/crm/entities/Customer_user';
-import { Interaction } from '../modules/crm/entities/Interaction';
+import { ClientUser } from '../models/ClientUser';
+import { Interaction } from '../models/Interaction';
+
 
 const router = Router();
 
@@ -50,7 +51,7 @@ router.get('/users', asyncHandler(async (req: ClientRequest, res: any) => {
   await clientDataSource.initialize();
   
   try {
-    const userRepo = clientDataSource.getRepository(users_client);
+    const userRepo = clientDataSource.getRepository(ClientUser);
     const users = await userRepo.find();
     
     res.json({
@@ -68,7 +69,7 @@ router.post('/users', asyncHandler(async (req: ClientRequest, res: any) => {
   await clientDataSource.initialize();
   
   try {
-    const userRepo = clientDataSource.getRepository(users_client);
+    const userRepo = clientDataSource.getRepository(ClientUser);
     const user = userRepo.create(req.body);
     const savedUser = await userRepo.save(user);
     

@@ -15,6 +15,15 @@ export class CustomerController {
       }
       const { firstName, lastName, email, password, phone, companyName } = req.body;
       
+      // Check for duplicate email
+      const existingCustomer = await AppDataSource.getRepository(Customer).findOne({ where: { email } });
+      if (existingCustomer) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already registered'
+        });
+      }
+      
       // Start transaction
       const queryRunner = AppDataSource.createQueryRunner();
       await queryRunner.connect();

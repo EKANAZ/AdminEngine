@@ -19,67 +19,33 @@ export class AuthController {
     const { companyName, companyDomain, email, password, firstName, lastName } = req.body;
 
     try {
-      // Start transaction
-      const queryRunner = DatabaseConfig.getDataSource().createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        // Create company
-        const company = new Company();
-        company.name = companyName;
-        company.domain = companyDomain;
-        await queryRunner.manager.save(company);
-
-        // Create tenant database
-        await createTenantDatabase(company.id);
-
-        // Create admin user
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User();
-        user.email = email;
-        user.password = hashedPassword;
-        user.firstName = firstName;
-        user.lastName = lastName;
-        user.company = company;
-        const adminRole = await this.authService.createRole({ name: 'admin', permissions: [] });
-        if (adminRole) {
-          user.roles = [adminRole];
-        }
-        await queryRunner.manager.save(user);
-
-        await queryRunner.commitTransaction();
-
-        // Generate JWT token
-        const token = jwt.sign(
-          { userId: user.id, email: user.email },
-          process.env.JWT_SECRET || 'your-secret-key',
-          { expiresIn: '24h' }
-        );
+      // Use the AuthService for registration
+      const result = await this.authService.register({
+        firstName,
+        lastName,
+        email,
+        password,
+        companyName
+      });
 
         res.status(201).json({
           success: true,
           data: {
-            token,
+          token: result.token,
+          refreshToken: result.refreshToken,
             user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              roles: user.roles
+            id: result.user.id,
+            email: result.user.email,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+            roles: result.user.roles
             },
             company: {
-              id: company.id,
-              name: company.name
+            id: result.user.company.id,
+            name: result.user.company.name
             }
           }
         });
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
     } catch (error) {
       logger.error('Registration error:', error);
       res.status(500).json({
@@ -93,54 +59,32 @@ export class AuthController {
     const { email, password } = req.body;
 
     try {
-      const user = await DatabaseConfig.getDataSource().getRepository(User)
-        .findOne({ where: { email }, relations: ['company'] });
-
-      if (!user) {
-        res.status(401).json({
-          success: false,
-          error: 'Invalid credentials'
-        });
-        return;
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        res.status(401).json({
-          success: false,
-          error: 'Invalid credentials'
-        });
-        return;
-      }
-
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '24h' }
-      );
+      // Use the AuthService for login
+      const result = await this.authService.login(email, password);
 
       res.json({
         success: true,
         data: {
-          token,
+          token: result.token,
+          refreshToken: result.refreshToken,
           user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            roles: user.roles
+            id: result.user.id,
+            email: result.user.email,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+            roles: result.user.roles
           },
           company: {
-            id: user.company.id,
-            name: user.company.name
+            id: result.user.company.id,
+            name: result.user.company.name
           }
         }
       });
     } catch (error) {
       logger.error('Login error:', error);
-      res.status(500).json({
+      res.status(401).json({
         success: false,
-        error: 'Error during login'
+        error: 'Invalid credentials'
       });
     }
   }

@@ -21,13 +21,16 @@ export class AuthService {
   get roleRepository() { return DatabaseConfig.getDataSource().getRepository(Role); }
   get permissionRepository() { return DatabaseConfig.getDataSource().getRepository(Permission); }
 
+  // In-memory refresh token store (use Redis in production)
+  private refreshTokens: Map<string, { userId: string; expiresAt: Date }> = new Map();
+
   async register(userData: {
     firstName: string;
     lastName: string;
     email: string;
     password: string;
     companyName: string;
-  }): Promise<{ user: User; token: string }> {
+  }): Promise<{ user: User; token: string; refreshToken: string }> {
     // 1. Create a new company for the user
     const company = this.companyRepository.create({ name: userData.companyName });
     await this.companyRepository.save(company);
@@ -63,14 +66,21 @@ export class AuthService {
       await this.permissionRepository.save(permission);
     }
 
-    // 6. Generate a JWT token for the new user
+    // 6. Generate JWT token and refresh token for the new user
     const token = this.generateToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+    
+    // Store refresh token
+    this.refreshTokens.set(refreshToken, {
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
 
-    // 7. Return the user and token
-    return { user, token };
+    // 7. Return the user and tokens
+    return { user, token, refreshToken };
   }
 
-  async login(email: string, password: string): Promise<{ user: User; token: string }> {
+  async login(email: string, password: string): Promise<{ user: User; token: string; refreshToken: string }> {
     // 1. Find the user by email
     const user = await this.userRepository.findOne({
       where: { email },
@@ -95,9 +105,17 @@ export class AuthService {
     user.lastLoginAt = new Date();
     await this.userRepository.save(user);
 
-    // 4. Generate a JWT token for the user
+    // 4. Generate JWT token and refresh token for the user
     const token = this.generateToken(user);
-    return { user, token };
+    const refreshToken = this.generateRefreshToken(user);
+    
+    // Store refresh token
+    this.refreshTokens.set(refreshToken, {
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+    
+    return { user, token, refreshToken };
   }
 
   async resetPassword(email: string): Promise<void> {
@@ -141,8 +159,20 @@ export class AuthService {
     };
 
     return jwt.sign(payload, process.env.JWT_SECRET!, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
     });
+  }
+
+  private generateRefreshToken(user: User): string {
+    const refreshToken = uuidv4(); // Generate a unique refresh token
+    
+    // Store refresh token with expiration
+    this.refreshTokens.set(refreshToken, {
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+    
+    return refreshToken;
   }
 
   async validateToken(token: string): Promise<User> {
@@ -200,5 +230,47 @@ export class AuthService {
 
     const role = this.roleRepository.create({ name: roleData.name, description: roleData.description });
     return this.roleRepository.save(role);
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
+    try {
+      // Check if refresh token exists in our store
+      const storedToken = this.refreshTokens.get(refreshToken);
+      if (!storedToken) {
+        throw new Error('Invalid refresh token');
+      }
+
+      // Check if refresh token has expired
+      if (new Date() > storedToken.expiresAt) {
+        this.refreshTokens.delete(refreshToken);
+        throw new Error('Refresh token expired');
+      }
+
+      // Get user data
+      const user = await this.userRepository.findOne({
+        where: { id: storedToken.userId },
+        relations: ['company', 'roles', 'roles.permissions']
+      });
+
+      if (!user || !user.isActive) {
+        throw new Error('User not found or inactive');
+      }
+
+      // Generate new access token and refresh token
+      const newToken = this.generateToken(user);
+      const newRefreshToken = this.generateRefreshToken(user);
+
+      // Remove old refresh token
+      this.refreshTokens.delete(refreshToken);
+
+      return { token: newToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      throw new Error('Invalid refresh token');
+    }
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    // Remove refresh token from store
+    this.refreshTokens.delete(refreshToken);
   }
 } 

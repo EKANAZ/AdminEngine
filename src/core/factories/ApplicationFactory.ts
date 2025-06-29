@@ -21,7 +21,11 @@ export class ApplicationFactory {
       else if (module.constructor.name === 'CompanyModule') path = '/api/companies';
       else if (module.constructor.name === 'RoleModule') path = '/api/roles';
       else if (module.constructor.name === 'PermissionModule') path = '/api/permissions';
-      else if (module.constructor.name === 'SyncModule') path = '/api/client/sync';
+      else if (module.constructor.name === 'SyncModule') {
+        path = '/api/client/sync';
+        // Pass the app instance to SyncModule for WebSocket notifications
+        (module as any).setApp(app);
+      }
       else if (module.constructor.name === 'AiModule') path = '/api/ai';
       else if (module.constructor.name === 'GoogleAuthModule') path = '/api/auth/google';
       else if (module.constructor.name === 'OtpAuthModule') path = '/api/auth/otp';

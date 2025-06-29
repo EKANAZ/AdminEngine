@@ -51,8 +51,9 @@ if not exist .env (
         echo DB_NAME=saas_platform
         echo.
         echo # JWT Configuration
-        echo JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-        echo JWT_EXPIRES_IN=24h
+        echo JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+        echo JWT_EXPIRES_IN=7d
+        echo JWT_REFRESH_EXPIRES_IN=30d
         echo.
         echo # Email Configuration (for password reset)
         echo SMTP_HOST=smtp.example.com

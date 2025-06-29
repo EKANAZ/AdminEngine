@@ -6,6 +6,15 @@ import { compare } from 'bcrypt';
 import logger from '../config/logger';
 import { DatabaseConfig } from '../core/config/DatabaseConfig';
 
+import { Interaction } from '../models/Interaction';
+
+// Map sync keys to entity classes (shared for pull/push)
+const entityMap: Record<string, any> = {
+    end_user: ClientUser, // sync key for client user entity
+    interaction: Interaction, // adjust key as per client payload
+    interactions: Interaction, // allow plural for flexibility
+};
+
 export class ClientService {
     // Client login
     async login(email: string, password: string, companyDomain: string) {
@@ -34,7 +43,7 @@ export class ClientService {
                 .getRepository(ClientUser)
                 .findOne({ where: { email } });
 
-            if (!user || !(await compare(password, user.password))) {
+            if (!user || !user.password || !(await compare(password, user.password))) {
                 throw new Error('Invalid credentials');
             }
 
@@ -80,7 +89,9 @@ export class ClientService {
             const result: any = {};
 
             for (const entityType of entityTypes) {
-                const repository = dataSource.getRepository(entityType);
+                const entityClass = entityMap[entityType];
+                if (!entityClass) continue;
+                const repository = dataSource.getRepository(entityClass);
                 const data = await repository.find({
                     where: {
                         updatedAt: MoreThan(new Date(lastSyncTimestamp))
@@ -104,20 +115,29 @@ export class ClientService {
     ) {
         try {
             const result: any = {};
-
+            // Use shared entityMap
             for (const [entityType, entities] of Object.entries(changes)) {
-                const repository = dataSource.getRepository(entityType);
-                
+                const entityClass = entityMap[entityType];
+                console.log('entityType:', entityType, 'entityClass:', entityClass); // Debug log
+                if (!entityClass) continue;
+                const repository = dataSource.getRepository(entityClass);
                 for (const entity of entities) {
+                    console.log('Saving entity:', entity); // Debug log
                     if (entity.id) {
-                        // Update existing entity
-                        await repository.update(entity.id, entity);
+                        // Check if entity exists
+                        const existing = await repository.findOne({ where: { id: entity.id } });
+                        if (existing) {
+                            // Update existing entity
+                            await repository.update(entity.id, entity);
+                        } else {
+                            // Insert new entity with provided id
+                            await repository.save(entity);
+                        }
                     } else {
                         // Create new entity
                         await repository.save(entity);
                     }
                 }
-
                 result[entityType] = await repository.find();
             }
 

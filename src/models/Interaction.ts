@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { users_client } from './Customer_user';
+import { ClientUser } from './ClientUser';
 
 @Entity('interactions')
 export class Interaction {
@@ -29,9 +29,9 @@ export class Interaction {
     customFields?: Record<string, any>;
   };
 
-  @ManyToOne(() => users_client, customer => customer.interactions)
-  @JoinColumn({ name: 'customer_id' })
-  customer!: users_client;
+  @ManyToOne(() => require('./ClientUser').ClientUser, (clientUser: any) => clientUser.interactions)
+  @JoinColumn({ name: 'client_user_id' })
+  clientUser!: ClientUser;
 
   @CreateDateColumn()
   createdAt!: Date;

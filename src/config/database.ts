@@ -21,7 +21,7 @@ export const AppDataSource = new DataSource({
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    synchronize: false, // Disable synchronize for security
+    synchronize: false, // Always false for main DB
     logging: process.env.NODE_ENV === 'development',
     entities: [
       User,
@@ -34,7 +34,7 @@ export const AppDataSource = new DataSource({
       Customer
     ],
     migrations: ['src/migrations/**/*.ts'],
-    migrationsRun: true, // Automatically run migrations on startup
+    migrationsRun: false, // Only run migrations manually
     migrationsTableName: 'migrations_history',
     subscribers: ['src/subscribers/**/*.ts'],
 });
@@ -57,8 +57,8 @@ export const createTenantDatabase = async (tenantId: string): Promise<void> => {
         logger.info(`Created database for tenant: ${dbName}`);
 
         // Import tenant entities only here
-        const { users_client } = require('../modules/crm/entities/Customer_user');
-        const { Interaction } = require('../modules/crm/entities/Interaction');
+        const { ClientUser } = require('../models/ClientUser');
+        const { Interaction } = require('../models/Interaction');
 
         // ONLY tenant entities, synchronize, and logging
         const newTenantDataSource = new DataSource({
@@ -68,8 +68,8 @@ export const createTenantDatabase = async (tenantId: string): Promise<void> => {
           username: process.env.DB_USERNAME,
           password: process.env.DB_PASSWORD,
           database: dbName,
-          entities: [users_client, Interaction], // ONLY tenant entities!
-          synchronize: true,
+          entities: [ClientUser, Interaction], // ONLY tenant entities!
+          synchronize: true, // Always true for tenant DBs
           logging: process.env.NODE_ENV === 'development'
         });
         await newTenantDataSource.initialize();
@@ -87,8 +87,8 @@ export const createTenantDatabase = async (tenantId: string): Promise<void> => {
 // Function to get tenant database connection (for client users only)
 export const getTenantDataSource = (tenantId: string): DataSource => {
     // Import tenant entities only here
-    const { users_client } = require('../modules/crm/entities/Customer_user');
-    const { Interaction } = require('../modules/crm/entities/Interaction');
+    const { ClientUser } =   require('../models/ClientUser');
+    const { Interaction } = require('../models/Interaction');
     return new DataSource({
         type: 'postgres',
         host: process.env.DB_HOST,
@@ -99,7 +99,7 @@ export const getTenantDataSource = (tenantId: string): DataSource => {
         synchronize: true,
         logging: process.env.NODE_ENV === 'development',
         entities: [
-          users_client,   // Client staff/employees
+          ClientUser,   // Client staff/employees
           Interaction    // Interactions for client users
         ] // ONLY tenant entities!
     });

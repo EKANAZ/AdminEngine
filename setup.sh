@@ -55,8 +55,9 @@ DB_PASSWORD=postgres
 DB_NAME=saas_platform
 
 # JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-JWT_EXPIRES_IN=24h
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_EXPIRES_IN=30d
 
 # Email Configuration (for password reset)
 SMTP_HOST=smtp.example.com

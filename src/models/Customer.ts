@@ -11,7 +11,7 @@ export class Customer {
   @Column()
   companyName!: string;
 
-  @Column()
+  @Column({ unique: true })
   email!: string;
 
   @Column()
